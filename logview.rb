@@ -62,6 +62,11 @@ end
 
 logfileName = ARGV[0]
 
+if( not File.exists?(logfileName) )
+	$stderr.puts "Log file '" + logfileName.to_s + "' doesn't exist"
+	exit
+end
+
 if( width < 1 )
 	$stderr.puts "Width must be greater than 0."
 	exit
