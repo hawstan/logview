@@ -8,34 +8,100 @@
 # License		GPLv2
 #
 
+require 'getoptlong'
 require 'sdl'
+
+
+
+opts = GetoptLong.new(
+  [ '--help', GetoptLong::NO_ARGUMENT ],
+  [ '--width', '-w', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--height', '-h', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--font', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--font-size', GetoptLong::REQUIRED_ARGUMENT ]
+)
+
+width = 500
+height = 100
+
+fontPath = '/usr/share/fonts/liberation/LiberationMono-Regular.ttf'
+fontSize = 12
+
+opts.each do |opt, arg|
+	case opt
+		when '--help'
+			puts <<-EOF
+Usage:
+  logview LOGFILE[ options]
+  logview --help	display this message and exit 
+Options:
+  LOGFILE		path to the file that is displayed
+  --width <width>, -w <width>
+			let the window width be <width>
+  --height <height, -h <height>
+			let the window height be <height>
+  --font <path>		use the file <path> as the font
+  --font-size <size>	let the font size be <size>
+EOF
+			exit(0)
+		when '--width'
+			width = arg.to_i
+		when '--height'
+			height = arg.to_i
+		when '--font'
+			fontPath = arg
+		when '--font-size'
+			fontSize = arg.to_i
+	end
+end
+
+if ARGV.length < 1
+  puts "Missing LOGFILE argument (see --help for more information)"
+  exit 0
+end
 
 logfileName = ARGV[0]
 
-if(logfileName == nil)
-	$stderr.puts "Argument 1 shall be the name of a log file"
+if( width < 1 )
+	$stderr.puts "Width must be greater than 0."
 	exit
 end
 
-#TODO dynamic dimensions
-WIDTH = 1000
-HEIGHT = 500
+if( height < 1 )
+	$stderr.puts "Height must be greater than 0."
+	exit
+end
+
+if( not File.exists?(fontPath) )
+	$stderr.puts "Font file does not exist."
+	exit
+end
+
+if( fontSize < 1)
+	$stderr.puts "Font size must be greater than 0."
+	exit
+end
 
 ONE_FRAME = 0.1
 
-
 SDL.init( SDL::INIT_VIDEO )
 
-screen = SDL::Screen.open(WIDTH, HEIGHT, 16, SDL::SWSURFACE)
+screen = SDL::Screen.open(width, height, 16, SDL::SWSURFACE)
 SDL::WM::set_caption($0,$0)
 
 SDL::TTF.init
 
-#TODO dynamic font
-font = SDL::TTF.open('/usr/share/fonts/liberation/LiberationMono-Regular.ttf', 10)
+font = nil
+begin
+	font = SDL::TTF.open(fontPath, fontSize)
+rescue SDL::Error => e
+	$stderr.puts(e.to_s)
+	exit
+end
+
 font.style = SDL::TTF::STYLE_NORMAL
 
-numLines = HEIGHT / font.height
+numLines = height / font.height
 
 file = File.new(logfileName, "r")
 
@@ -68,7 +134,7 @@ loop do
 		end
 
 		# clear the screen with black
-		screen.fillRect(0, 0, WIDTH, HEIGHT, 0x000000)
+		screen.fillRect(0, 0, width, height, 0x000000)
 
 		for i in 0..(lines.length-1)
 			font.draw_solid_utf8(screen, lines[i], 0, font.height * i, 255, 255, 255)
