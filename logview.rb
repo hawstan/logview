@@ -11,6 +11,13 @@
 require 'getoptlong'
 require 'sdl'
 
+running = true
+
+# cease running upon catching SIGTERM
+Signal.trap("TERM") do
+	puts "Terminating..."
+	running = false
+end
 
 
 opts = GetoptLong.new(
@@ -44,6 +51,7 @@ Options:
   --font-size <size>	let the font size be <size>
 Signals:
   USR1			reopen LOGFILE
+  TERM			soft exit
 EOF
 			exit(0)
 		when '--width'
@@ -134,7 +142,7 @@ end
 
 lines = []
 
-loop do
+while running
 	startTime = Time.now
 
 	pendingRedraw = false
