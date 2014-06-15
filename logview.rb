@@ -98,12 +98,15 @@ rescue SDL::Error => e
 	$stderr.puts(e.to_s)
 	exit
 end
+at_exit { font.close }
 
 font.style = SDL::TTF::STYLE_NORMAL
+
 
 numLines = height / font.height
 
 file = File.new(logfileName, "r")
+at_exit { file.close }
 
 lines = []
 
@@ -113,8 +116,6 @@ loop do
 	while event = SDL::Event2.poll
 		case event
 			when SDL::Event2::Quit
-				font.close
-				file.close
 				exit
 		end
 	end
