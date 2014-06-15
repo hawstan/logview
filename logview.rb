@@ -113,10 +113,15 @@ lines = []
 loop do
 	startTime = Time.now
 
-	while event = SDL::Event2.poll
+	pendingRedraw = false
+
+	while event = SDL::Event.poll
 		case event
-			when SDL::Event2::Quit
+			when SDL::Event::Quit
 				exit
+			else
+				#TODO use (future) SDL::Event::VideoExpose
+				pendingRedraw = true
 		end
 	end
 
@@ -134,6 +139,10 @@ loop do
 			end
 		end
 
+		pendingRedraw = true
+	end
+
+	if pendingRedraw
 		# clear the screen with black
 		screen.fillRect(0, 0, width, height, 0x000000)
 
