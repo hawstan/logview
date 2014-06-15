@@ -42,6 +42,8 @@ Options:
 			let the window height be <height>
   --font <path>		use the file <path> as the font
   --font-size <size>	let the font size be <size>
+Signals:
+  USR1			reopen LOGFILE
 EOF
 			exit(0)
 		when '--width'
@@ -64,7 +66,7 @@ logfileName = ARGV[0]
 
 if( not File.exists?(logfileName) )
 	$stderr.puts "Log file '" + logfileName.to_s + "' doesn't exist"
-	exit
+#	exit
 end
 
 if( width < 1 )
@@ -110,8 +112,25 @@ font.style = SDL::TTF::STYLE_NORMAL
 
 numLines = height / font.height
 
-file = File.new(logfileName, "r")
+
+def openLogFile(filename)
+	begin
+		return File.new(filename, "r")
+	rescue SystemCallError => e
+		$stderr.puts("Cannot open log file: " + e.to_s)
+		exit
+	end
+end
+
+file = openLogFile(logfileName)
 at_exit { file.close }
+
+# reopen log file upon catching USR1
+Signal.trap("USR1") do
+	puts "Reopening log file..."
+	file.close
+	file = openLogFile(logfileName)	
+end
 
 lines = []
 
